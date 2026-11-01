@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Email Log - {{ form.title }} - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="mb-8">
+            <a href="{% url 'form_submissions' form.id %}" class="text-teal-600 dark:text-teal-400 hover:text-teal-700 mb-4 inline-block">&larr; Back to Submissions</a>
+            <h1 class="text-3xl sm:text-4xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ form.title }} - Email Log</h1>
+            <p class="text-gray-600 dark:text-gray-300">
+                <a href="?status=sent" class="font-semibold text-green-700 dark:text-green-400">{{ counts.sent }} sent</a> &middot;
+                <a href="?status=failed" class="font-semibold text-red-600 dark:text-red-400">{{ counts.failed }} failed</a>
+                &middot; <a href="?" class="underline">show all</a>
+            </p>
+        </div>
+
+        <form method="get" class="glass p-4 rounded-2xl shadow-lg border-2 border-teal-500/20 mb-6 flex flex-wrap gap-3 items-end">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Result</label>
+                <select name="status" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="">All</option>
+                    <option value="sent" {% if status == 'sent' %}selected{% endif %}>Sent successfully</option>
+                    <option value="failed" {% if status == 'failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Message type</label>
+                <select name="kind" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="">All</option>
+                    {% for value, label in kinds %}<option value="{{ value }}" {% if kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Search</label>
+                <input type="text" name="q" value="{{ q }}" placeholder="Name, email or phone" class="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            <button type="submit" class="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium">Filter</button>
+        </form>
+
+        {% if page %}
+        <form method="post" action="{% url 'email_retry' form.id %}">
+            {% csrf_token %}
+            {% if status == 'failed' %}
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button type="submit" name="action" value="selected" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Retry Ticked</button>
+                <button type="submit" name="action" value="all" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-medium">Retry All {{ counts.failed }} Failed</button>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Retrying a failed account email generates a new temporary password. Use the WhatsApp button to tell the applicant about a failed email.</p>
+            {% endif %}
+            <div class="glass rounded-2xl shadow-lg border-2 border-teal-500/20 overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                            {% if status == 'failed' %}<th class="px-4 py-4"><input type="checkbox" onclick="document.querySelectorAll('.row-check').forEach(c => c.checked = this.checked)"></th>{% endif %}
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Time</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Applicant</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Phone</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Type</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Result</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Inform</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for row in page %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            {% if status == 'failed' %}<td class="px-4 py-4"><input type="checkbox" name="ids" value="{{ row.id }}" class="row-check"></td>{% endif %}
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ row.created_at|date:"M d, g:i A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">{{ row.name|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ row.to_email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ row.phone|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ row.get_kind_display }}</td>
+                            <td class="px-6 py-4">
+                                {% if row.status == 'sent' %}<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Sent</span>
+                                {% else %}<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Failed</span>
+                                <div class="text-xs text-red-600 dark:text-red-400 mt-1 max-w-xs break-words">{{ row.error }}</div>{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if row.wa_link %}<a href="{{ row.wa_link }}" target="_blank" rel="noopener" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium">WhatsApp</a>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        {% if page.has_other_pages %}
+        <div class="flex gap-4 mt-6 justify-center text-gray-700 dark:text-gray-300">
+            {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="underline">Previous</a>{% endif %}
+            <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+            {% if page.has_next %}<a href="?page={{ page.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}" class="underline">Next</a>{% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="glass p-12 rounded-2xl text-center border-2 border-dashed border-teal-500/30">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No emails here</h3>
+            <p class="text-gray-600 dark:text-gray-300">Emails will appear after applicants apply or are admitted.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

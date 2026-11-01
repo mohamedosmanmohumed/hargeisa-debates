@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}Schedule &amp; Attendance - {{ form.title }} - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        <a href="{% url 'form_submissions' form.id %}" class="text-teal-600 dark:text-teal-400 mb-4 inline-block">&larr; Back to Submissions</a>
+        <h1 class="text-3xl sm:text-4xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ form.title }} - Schedule &amp; Attendance</h1>
+        <p class="text-gray-600 dark:text-gray-300 mb-8">{{ admitted }} admitted applicant(s). Applicants with an account see this schedule, their attendance and your announcements in their own portal.</p>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Timetable</h2>
+            <button type="button" id="open-settings" class="px-4 py-2 bg-white dark:bg-gray-700 border-2 border-indigo-400/50 text-indigo-600 dark:text-indigo-300 rounded-lg font-medium">Grid Settings</button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+            {% if nav.prev %}<a href="?week={{ nav.prev }}" class="px-3 py-1.5 border rounded-lg text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700">&larr; Previous</a>{% endif %}
+            {% for w in nav.all %}<a href="?week={{ w.n }}" title="{{ w.first|date:'M d' }}" class="px-3 py-1.5 rounded-lg text-sm border {% if w.n == nav.week %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200{% endif %}">Week {{ w.n }}</a>{% endfor %}
+            {% if nav.next %}<a href="?week={{ nav.next }}" class="px-3 py-1.5 border rounded-lg text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700">Next &rarr;</a>{% endif %}
+            <span class="text-sm text-gray-500 ml-2">{{ nav.first|date:"M d" }} - {{ nav.last|date:"M d, Y" }}</span>
+        </div>
+
+        <div class="overflow-x-auto pb-3 mb-10">
+            <div class="grid gap-3" style="grid-template-columns: 8rem {{ cols }}; min-width: max-content;">
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 flex items-center justify-center text-[11px] font-bold text-gray-400 p-3">DAY \ SESSION</div>
+                {% for h in headers %}
+                {% if h.is_break %}
+                <div class="rounded-xl border-2 border-dashed border-amber-300 bg-amber-50 text-amber-700 p-3 text-center flex items-center justify-center">
+                    <div class="text-xs font-bold uppercase">&#9749; Break</div>
+                </div>
+                {% else %}
+                <div class="rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600 p-3 text-center flex items-center justify-center">
+                    <div class="text-sm font-bold uppercase">Session {{ h.number }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% for r in rows %}
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-800/60 flex flex-col items-center justify-center font-bold text-gray-800 dark:text-gray-100 p-3 min-h-[6.5rem]">
+                    <div class="uppercase text-sm">{{ r.date|date:"l" }}</div>
+                    <div class="text-xs font-normal text-gray-500">{{ r.date|date:"M d, Y" }}</div>
+                </div>
+                {% for c in r.cells %}
+                {% if not c.slot %}
+                <div class="rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/30"></div>
+                {% elif c.slot.is_break %}
+                <div class="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50/60 flex flex-col items-center justify-center text-amber-400">
+                    <span class="text-2xl">&#9749;</span>
+                    <span class="text-[10px] font-mono">{{ c.slot.start|time:"H:i" }} - {{ c.slot.end|time:"H:i" }}</span>
+                </div>
+                {% elif c.session %}
+                <div class="group relative rounded-xl border-2 border-indigo-300 bg-white dark:bg-gray-800 hover:border-indigo-500 transition">
+                    <button type="button" class="assign w-full h-full text-left p-3 pb-7 flex flex-col gap-1 min-h-[6.5rem]" data-date="{{ r.date|date:'Y-m-d' }}" data-slot="{{ c.slot.number }}" data-label="{{ r.date|date:'l' }} {{ c.slot.start|time:'H:i' }} - {{ c.slot.end|time:'H:i' }}" data-title="{{ c.session.title }}" data-facilitator="{{ c.session.facilitator }}" data-location="{{ c.session.location }}" data-description="{{ c.session.description }}">
+                        <span class="font-bold text-indigo-700 dark:text-indigo-300 text-sm pr-4">{{ c.session.title }}</span>
+                        {% if c.session.facilitator %}<span class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300"><span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center">{{ c.session.facilitator|slice:":1"|upper }}</span>{{ c.session.facilitator }}</span>{% endif %}
+                        <span class="text-[11px] font-mono text-gray-500">{{ c.slot.start|time:"H:i" }} - {{ c.slot.end|time:"H:i" }}</span>
+                        <span class="hidden group-hover:inline-block absolute top-2 right-6 text-[10px] font-bold bg-indigo-600 text-white rounded px-1.5 py-0.5">EDIT</span>
+                    </button>
+                    <form method="post" action="{% url 'session_delete' c.session.id %}" onsubmit="return confirm('Delete this session and its attendance records?')" class="absolute top-1 right-1">{% csrf_token %}<button type="submit" class="text-gray-400 hover:text-red-600 leading-none px-1 text-lg" title="Delete">&times;</button></form>
+                    <a href="{% url 'session_attendance' c.session.id %}" class="absolute bottom-2 left-3 text-[10px] font-semibold text-amber-600 hover:underline">Attendance ({{ c.session.marked }}/{{ admitted }})</a>
+                </div>
+                {% else %}
+                <button type="button" class="assign group rounded-xl border border-gray-200 dark:border-gray-700 bg-white/40 dark:bg-gray-800/40 hover:border-2 hover:border-dashed hover:border-indigo-300 hover:bg-indigo-50/60 text-gray-400 hover:text-indigo-500 flex flex-col items-center justify-center min-h-[6.5rem] transition" data-date="{{ r.date|date:'Y-m-d' }}" data-slot="{{ c.slot.number }}" data-label="{{ r.date|date:'l' }} {{ c.slot.start|time:'H:i' }} - {{ c.slot.end|time:'H:i' }}">
+                    <span class="text-[11px] font-mono group-hover:hidden">{{ c.slot.start|time:"H:i" }} - {{ c.slot.end|time:"H:i" }}</span>
+                    <span class="hidden group-hover:block text-2xl leading-none">+</span><span class="hidden group-hover:block text-[11px] font-bold uppercase mt-1">Assign</span>
+                </button>
+                {% endif %}
+                {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <dialog id="assign-dlg" class="rounded-2xl p-0 w-full max-w-md backdrop:bg-black/50">
+            <form method="post" action="{% url 'session_add' form.id %}" class="p-6 space-y-3 bg-white dark:bg-gray-800">
+                {% csrf_token %}
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Assign session</h3>
+                <div id="assign-label" class="text-sm text-gray-500"></div>
+                <input type="hidden" name="date" id="assign-date">
+                <input type="hidden" name="slot" id="assign-slot">
+                <input type="text" name="title" id="assign-title" required placeholder="Session name" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <input type="text" name="facilitator" id="assign-facilitator" placeholder="Guest lecturer / facilitator (optional)" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <input type="text" name="location" id="assign-location" placeholder="Location / online link (optional)" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <textarea name="description" id="assign-description" rows="2" placeholder="Description (optional)" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="this.closest('dialog').close()" class="px-4 py-2 border rounded-lg text-gray-700 dark:text-gray-200">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium">Confirm</button>
+                </div>
+            </form>
+        </dialog>
+
+        <dialog id="settings-dlg" class="rounded-2xl p-0 w-full max-w-3xl backdrop:bg-black/50">
+            <form method="post" action="{% url 'grid_settings' form.id %}" id="settings-form" class="p-6 space-y-3 bg-white dark:bg-gray-800 max-h-[90vh] overflow-y-auto">
+                {% csrf_token %}
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Grid Settings</h3>
+                <div class="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                    <label>First date<input type="date" name="start_date" value="{{ cfg.start_date|date:'Y-m-d' }}" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></label>
+                    <label>Weeks<input type="number" name="weeks" value="{{ cfg.weeks }}" min="1" max="12" required class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></label>
+                </div>
+                <div class="text-xs text-gray-500">Work days (apply to every week)</div>
+                <div id="work-days" class="flex flex-wrap gap-3 text-sm text-gray-900 dark:text-white"></div>
+                <p class="text-xs text-gray-500">Each week has its own plan: pick a week, then give each day its own sessions and breaks with their own start and end times.</p>
+                <div id="week-tabs" class="flex flex-wrap gap-1"></div>
+                <div id="day-plans" class="space-y-3"></div>
+                <input type="hidden" name="plans" id="plans-json">
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="this.closest('dialog').close()" class="px-4 py-2 border rounded-lg text-gray-700 dark:text-gray-200">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Save settings</button>
+                </div>
+            </form>
+        </dialog>
+        {{ day_choices|json_script:"day-choices" }}
+        {{ plans|json_script:"plans-data" }}
+
+        <form method="post" action="{% url 'announcement_add' form.id %}" class="glass p-6 rounded-2xl shadow-lg border-2 border-teal-500/20 space-y-3 mb-10">
+            {% csrf_token %}
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Post an announcement</h2>
+            <input type="text" name="title" required placeholder="Title" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <textarea name="body" rows="4" required placeholder="Message to the admitted applicants" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Post announcement</button>
+        </form>
+
+        {% if loose_sessions %}
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Other sessions</h2>
+        <div class="space-y-3 mb-10">
+            {% for s in loose_sessions %}
+            <div class="glass p-5 rounded-2xl shadow border-2 border-teal-500/20 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <div class="font-semibold text-gray-900 dark:text-white">{{ s.title }}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-300">{{ s.date|date:"D, M d, Y" }}{% if s.start_time %} &middot; {{ s.start_time|time:"g:i A" }}{% endif %}{% if s.facilitator %} &middot; {{ s.facilitator }}{% endif %}{% if s.location %} &middot; {{ s.location }}{% endif %}</div>
+                    <div class="text-xs text-gray-500 mt-1">Marked {{ s.marked }}/{{ admitted }} &middot; present {{ s.counts.present }}, late {{ s.counts.late }}, excused {{ s.counts.excused }}, absent {{ s.counts.absent }}</div>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{% url 'session_attendance' s.id %}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium">Take attendance</a>
+                    <form method="post" action="{% url 'session_delete' s.id %}" onsubmit="return confirm('Delete this session and its attendance records?')">{% csrf_token %}<button type="submit" class="px-4 py-2 border-2 border-red-500 text-red-600 rounded-lg font-medium">Delete</button></form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Announcements</h2>
+        <div class="space-y-3">
+            {% for a in announcements %}
+            <div class="glass p-5 rounded-2xl shadow border-2 border-teal-500/20 flex justify-between gap-4">
+                <div><div class="font-semibold text-gray-900 dark:text-white">{{ a.title }}</div><div class="text-xs text-gray-500">{{ a.created_at|date:"M d, Y g:i A" }}</div><p class="text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-line">{{ a.body }}</p></div>
+                <form method="post" action="{% url 'announcement_delete' a.id %}" onsubmit="return confirm('Delete this announcement?')">{% csrf_token %}<button type="submit" class="px-3 py-1 border-2 border-red-500 text-red-600 rounded-lg text-sm">Delete</button></form>
+            </div>
+            {% empty %}
+            <p class="text-gray-500">No announcements yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    var dlg = document.getElementById('assign-dlg');
+    document.querySelectorAll('.assign').forEach(function (b) {
+        b.addEventListener('click', function () {
+            ['date', 'slot', 'title', 'facilitator', 'location', 'description'].forEach(function (k) {
+                document.getElementById('assign-' + k).value = b.dataset[k] || '';
+            });
+            document.getElementById('assign-label').textContent = b.dataset.label;
+            dlg.showModal();
+        });
+    });
+
+    var days = JSON.parse(document.getElementById('day-choices').textContent),
+        plans = JSON.parse(document.getElementById('plans-data').textContent),
+        wrap = document.getElementById('day-plans'), tabs = document.getElementById('week-tabs'),
+        weeksInput = document.querySelector('input[name="weeks"]'), cur = 1,
+        cls = 'px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm';
+    document.getElementById('work-days').innerHTML = days.map(function (d) {
+        return '<label class="flex items-center gap-1"><input type="checkbox" name="work_days" value="' + d.i + '"' + (d.on ? ' checked' : '') + '> ' + d.name + '</label>';
+    }).join('');
+    function weeks() { return Math.max(1, Math.min(12, +weeksInput.value || 1)); }
+    function key(w, i) { return w + ':' + i; }
+    function ensure(w) {
+        days.forEach(function (d) {
+            if (!plans[key(w, d.i)]) plans[key(w, d.i)] = JSON.parse(JSON.stringify(plans[key(w - 1, d.i)] || []));
+        });
+    }
+    function read() {
+        wrap.querySelectorAll('[data-day]').forEach(function (card) {
+            plans[key(cur, card.dataset.day)] = Array.prototype.map.call(card.querySelectorAll('.item'), function (r) {
+                return { start: r.querySelector('.s').value, end: r.querySelector('.e').value, break: r.querySelector('.b').checked };
+            });
+        });
+    }
+    function renderTabs() {
+        tabs.innerHTML = '';
+        for (var w = 1; w <= weeks(); w++) {
+            (function (w) {
+                var b = document.createElement('button');
+                b.type = 'button';
+                b.textContent = 'Week ' + w;
+                b.className = 'px-3 py-1 rounded-lg text-sm border ' + (w === cur ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200');
+                b.addEventListener('click', function () { read(); cur = w; render(); });
+                tabs.appendChild(b);
+            })(w);
+        }
+    }
+    function render() {
+        if (cur > weeks()) cur = weeks();
+        for (var w = 1; w <= cur; w++) ensure(w);
+        renderTabs();
+        wrap.innerHTML = '';
+        days.forEach(function (d) {
+            var k = key(cur, d.i), card = document.createElement('div');
+            card.dataset.day = d.i;
+            card.className = 'rounded-xl border border-gray-200 dark:border-gray-700 p-3';
+            card.innerHTML = '<div class="flex flex-wrap items-center justify-between gap-2 mb-2"><span class="font-semibold text-gray-900 dark:text-white">' + d.name + '</span>' +
+                '<div class="flex gap-2 text-xs"><button type="button" class="add px-2 py-1 border rounded-lg text-indigo-600">+ Session</button><button type="button" class="addb px-2 py-1 border rounded-lg text-amber-600">+ Break</button><button type="button" class="copy px-2 py-1 border rounded-lg text-gray-600 dark:text-gray-300">Copy to all days</button><button type="button" class="copyw px-2 py-1 border rounded-lg text-gray-600 dark:text-gray-300">Copy to all weeks</button></div></div><div class="items space-y-1"></div>';
+            var items = card.querySelector('.items');
+            (plans[k] || []).forEach(function (it, idx) {
+                var r = document.createElement('div');
+                r.className = 'item flex flex-wrap items-center gap-2 text-sm';
+                r.innerHTML = '<span class="w-16 text-xs text-gray-500 n"></span><input type="time" class="s ' + cls + '" value="' + it.start + '" required><span>to</span><input type="time" class="e ' + cls + '" value="' + it.end + '" required>' +
+                    '<label class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300"><input type="checkbox" class="b"' + (it.break ? ' checked' : '') + '> break</label><button type="button" class="rm text-gray-400 hover:text-red-600 text-lg leading-none px-1" title="Remove">&times;</button>';
+                r.querySelector('.rm').addEventListener('click', function () { read(); plans[k].splice(idx, 1); render(); });
+                items.appendChild(r);
+            });
+            var n = 0;
+            items.querySelectorAll('.item').forEach(function (r) { r.querySelector('.n').textContent = 'Slot ' + (++n); });
+            function add(isBreak) {
+                read();
+                var list = plans[k] = plans[k] || [], last = list[list.length - 1];
+                var st = last ? last.end : '08:30', p = st.split(':'), m = Math.min((+p[0]) * 60 + (+p[1]) + (isBreak ? 15 : 60), 1439);
+                var en = ('0' + Math.floor(m / 60) % 24).slice(-2) + ':' + ('0' + m % 60).slice(-2);
+                list.push({ start: st, end: en, break: isBreak });
+                render();
+            }
+            card.querySelector('.add').addEventListener('click', function () { add(false); });
+            card.querySelector('.addb').addEventListener('click', function () { add(true); });
+            card.querySelector('.copy').addEventListener('click', function () {
+                read();
+                var src = JSON.stringify(plans[k] || []);
+                days.forEach(function (o) { plans[key(cur, o.i)] = JSON.parse(src); });
+                render();
+            });
+            card.querySelector('.copyw').addEventListener('click', function () {
+                read();
+                var src = JSON.stringify(plans[k] || []);
+                for (var w = 1; w <= weeks(); w++) plans[key(w, d.i)] = JSON.parse(src);
+                render();
+            });
+            wrap.appendChild(card);
+        });
+    }
+    render();
+    weeksInput.addEventListener('input', function () { read(); render(); });
+    document.getElementById('settings-form').addEventListener('submit', function () {
+        read();
+        for (var w = 1; w <= weeks(); w++) ensure(w);
+        var out = {};
+        Object.keys(plans).forEach(function (k) { if (+k.split(':')[0] <= weeks()) out[k] = plans[k]; });
+        document.getElementById('plans-json').value = JSON.stringify(out);
+    });
+    document.getElementById('open-settings').addEventListener('click', function () { document.getElementById('settings-dlg').showModal(); });
+})();
+</script>
+{% endblock %}

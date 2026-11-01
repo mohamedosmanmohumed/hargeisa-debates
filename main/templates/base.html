@@ -1,0 +1,231 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hargeisa Debates{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'space': ['Space Grotesk', 'sans-serif'],
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        teal: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                            950: '#042f2e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+<link rel="icon" type="image/webp" href="{% static 'img/HG-Debates.webp' %}">
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen font-inter">
+    {% csrf_token %}
+
+    <!-- Animated Background Particles -->
+    <div class="particles fixed inset-0 z-0">
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 8s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 10s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 12s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 14s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="glass fixed w-full z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-2 hover:scale-105 transition-transform">
+                        <img src="{% static 'img/HG-Debates.webp' %}" alt="Hargeisa Debates Logo" class="h-14 w-auto dark:hidden">
+                        <img src="{% static 'img/logo.png' %}" alt="Hargeisa Debates Logo" class="h-10 w-auto hidden dark:block">
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    {% if not user.is_authenticated or user.is_staff or user.is_superuser %}<a href="{% url 'home' %}" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium hover:scale-105 transform">Register</a>{% endif %}
+                    {% if user.is_authenticated %}
+                    {% if user.is_staff or user.is_superuser %}
+                    <a href="{% url 'form_list' %}" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium hover:scale-105 transform">Manage Forms</a>
+                    {% else %}
+                    <a href="{% url 'applicant_dashboard' %}" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">My Dashboard</a>
+                    <a href="{% url 'applicant_schedule' %}" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Schedule</a>
+                    <a href="{% url 'applicant_attendance' %}" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Attendance</a>
+                    {% endif %}
+                    <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button type="submit" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Logout</button></form>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium hover:scale-105 transform">Staff Login</a>
+                    {% endif %}
+
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="p-2 rounded-lg glass hover-lift">
+                        <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                        </svg>
+                        <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="p-2 rounded-lg glass hover-lift">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass border-t border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-3 space-y-2">
+                <a href="{% url 'home' %}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Register</a>
+                {% if user.is_authenticated %}
+                {% if user.is_staff or user.is_superuser %}
+                <a href="{% url 'form_list' %}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Manage Forms</a>
+                {% else %}
+                <a href="{% url 'applicant_dashboard' %}" class="block py-2 text-gray-700 dark:text-gray-300 font-medium">My Dashboard</a>
+                <a href="{% url 'applicant_schedule' %}" class="block py-2 text-gray-700 dark:text-gray-300 font-medium">Schedule</a>
+                <a href="{% url 'applicant_attendance' %}" class="block py-2 text-gray-700 dark:text-gray-300 font-medium">Attendance</a>
+                {% endif %}
+                <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="w-full text-left py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Logout</button></form>
+                {% else %}
+                <a href="{% url 'login' %}" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">Staff Login</a>
+                {% endif %}
+                <button id="mobile-theme-toggle" class="w-full text-left py-2 text-gray-700 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium">
+                    Toggle Theme
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-16">
+        {% if messages %}
+        <div class="max-w-3xl mx-auto px-4 pt-6 relative z-10">
+            {% for message in messages %}
+            <div class="mb-3 p-4 rounded-lg border {% if message.tags == 'error' %}bg-red-100 border-red-400 text-red-700 dark:bg-red-900 dark:border-red-700 dark:text-red-200{% else %}bg-green-100 border-green-400 text-green-700 dark:bg-green-900 dark:border-green-700 dark:text-green-200{% endif %}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-br from-teal-50 to-teal-100 dark:from-black dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-white mt-auto relative overflow-hidden">
+        <!-- Animated background elements -->
+        <div class="absolute top-0 left-0 w-72 h-72 bg-teal-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse"></div>
+        <div class="absolute bottom-0 right-0 w-72 h-72 bg-teal-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse" style="animation-delay: 2s;"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass p-6 rounded-xl hover-lift border-2 border-teal-500/20">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <img src="{% static 'img/HG-Debates.webp' %}" alt="Hargeisa Debates Logo" class="h-16 w-auto dark:hidden">
+                        <img src="{% static 'img/logo.png' %}" alt="Hargeisa Debates Logo" class="h-12 w-auto hidden dark:block">
+                    </div>
+                    <p class="text-gray-700 dark:text-teal-200">Fostering dialogue, empowering voices, and building a stronger community through meaningful connection.</p>
+                </div>
+                <div class="glass p-6 rounded-xl hover-lift border-2 border-teal-500/20">
+                    <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'home' %}" class="text-gray-700 dark:text-teal-200 hover:text-teal-600 dark:hover:text-white transition-colors hover:scale-105 transform inline-block">Register</a></li>
+                        <li><a href="{% url 'login' %}" class="text-gray-700 dark:text-teal-200 hover:text-teal-600 dark:hover:text-white transition-colors hover:scale-105 transform inline-block">Staff Login</a></li>
+                    </ul>
+                </div>
+                <div class="glass p-6 rounded-xl hover-lift border-2 border-teal-500/20">
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <p class="text-gray-700 dark:text-teal-200">Behind Ambassador Hotel, Hargeisa, Somaliland</p>
+                    <p class="text-gray-700 dark:text-teal-200">Phone: +252 63 3394822</p>
+                    <p class="text-gray-700 dark:text-teal-200">Email: info@hargeisadebates.com</p>
+                </div>
+            </div>
+            <div class="glass p-6 rounded-xl mt-8 text-center text-gray-700 dark:text-teal-200 border-2 border-teal-500/20">
+                <p>&copy; 2026 Hargeisa Debates. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle Functionality
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const mobileThemeToggleBtn = document.getElementById('mobile-theme-toggle');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+
+        // Check for saved theme preference or default to 'light'
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            document.documentElement.classList.remove('dark');
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        mobileThemeToggleBtn.addEventListener('click', toggleTheme);
+
+        // Mobile Menu Toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu when clicking a link
+        const mobileLinks = mobileMenu.querySelectorAll('a');
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

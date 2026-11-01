@@ -1,0 +1,160 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificate - {{ sub.applicant_name }}</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Josefin+Sans:wght@600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+    @page { size: A4 landscape; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #e5e7eb; font-family: 'Montserrat', Arial, sans-serif; color: #111; }
+    .toolbar { text-align: center; padding: 12px; }
+    .toolbar button, .toolbar a { font: 600 14px Montserrat, Arial; background: #0f766e; color: #fff; border: 0; padding: 10px 22px; border-radius: 8px; cursor: pointer; text-decoration: none; margin: 0 4px; }
+    .toolbar a.alt { background: #475569; }
+    .stage { display: flex; justify-content: center; padding-bottom: 24px; overflow: auto; }
+    .page { width: 297mm; height: 210mm; background: #b0c4de; padding: 7mm; position: relative; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; box-shadow: 0 4px 20px rgba(0,0,0,.25); }
+    .border-outer { width: 100%; height: 100%; background: #fff; border: 0.3mm solid #8a8f98; padding: 1.5mm; }
+    .border-mid { width: 100%; height: 100%; padding: 5mm; background-color: #fff; box-shadow: inset 0 0 0 0.25mm #8a8f98; background-size: 5mm 5mm; background-repeat: round; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><g fill='none' stroke='%237d838d' stroke-width='1.6'><path d='M0 25 C12 3 13 3 25 25 S38 47 50 25'/><path d='M0 25 C12 47 13 47 25 25 S38 3 50 25'/><circle cx='25' cy='25' r='7'/><circle cx='0' cy='25' r='7'/><circle cx='50' cy='25' r='7'/><circle cx='25' cy='25' r='2.5'/><path d='M0 2 Q12.5 14 25 2 Q37.5 14 50 2'/><path d='M0 48 Q12.5 36 25 48 Q37.5 36 50 48'/></g></svg>"); }
+    .inner { width: 100%; height: 100%; background: #fff; border: 1mm double #6b7280; position: relative; padding: 9mm 16mm 8mm; text-align: center; }
+    .logos { display: flex; justify-content: space-between; align-items: flex-start; }
+    .logo-hd { text-align: left; line-height: 1; }
+    .logo-hd img { height: 25mm; width: auto; margin-top: -2mm; display: block; }
+    .logo-hbs { text-align: left; line-height: 1.2; }
+    .logo-hbs img { height: 23mm; width: auto; display: block; }
+    h1 { margin: 8mm 0 6mm; font-family: 'Josefin Sans', 'Montserrat', Arial, sans-serif; font-size: 9.6mm; font-weight: 700; color: #0f5f57; letter-spacing: .25mm; text-transform: uppercase; }
+    .certify { font-size: 5.1mm; font-weight: 500; }
+    .name { display: inline-block; min-width: 112mm; border-bottom: .4mm solid #111; margin-left: 2.5mm; padding: 0 4.5mm; font-family: 'Josefin Sans', 'Montserrat', Arial, sans-serif; font-weight: 600; font-size: 9.5mm; vertical-align: bottom; }
+    .line { font-size: 4.5mm; font-weight: 600; margin: 9mm 0 7mm; }
+    .program { font-size: 6.3mm; font-weight: 600; color: #0f5f57; }
+    .desc { font-size: 5.3mm; font-weight: 600; line-height: 1.9; max-width: 228mm; margin: 3mm auto 0; }
+    .desc .hbs { color: #849c24; font-weight: 600; }
+    .desc .hdo { color: #0b6b6c; font-weight: 600; }
+    .foot { position: absolute; left: 16mm; right: 16mm; bottom: 8mm; display: flex; justify-content: space-between; align-items: flex-end; }
+    .sig { width: 70mm; font-size: 3mm; font-weight: 600; text-align: center; }
+    .sig .l { border-top: .3mm solid #111; padding-top: 1mm; }
+    .sig .sp { height: 16mm; display: flex; align-items: flex-end; justify-content: center; }
+    .foot .sig:first-child .sp { height: 38mm; }
+    .foot .sig:first-child .sp img { margin-bottom: -16mm; position: relative; left: -12mm; }
+    .foot .sig:last-child .sp { height: 11mm; }
+    .foot .sig:last-child .sp img { margin-bottom: -1mm; }
+    .sig .sp img { max-height: 100%; max-width: 100%; object-fit: contain; position: relative; z-index: 1; margin-bottom: -2.5mm; }
+    .meta { font-size: 3.3mm; font-weight: 500; margin-top: 6mm; }
+    .center { position: absolute; left: 0; right: 0; bottom: 8mm; font-size: 2.6mm; color: #64748b; }
+    @media print {
+        html, body { background: #fff; }
+        .toolbar { display: none; }
+        .stage { padding: 0; display: block; }
+        .page { box-shadow: none; }
+    }
+    .toolbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
+    .toolbar button, .toolbar a { margin: 0; }
+    .stage { overflow-x: hidden; }
+</style>
+<link rel="icon" type="image/webp" href="{% static 'img/HG-Debates.webp' %}">
+</head>
+<body>
+<div class="toolbar">
+    <select id="fmt" style="font:600 14px Montserrat,Arial;padding:9px 12px;border-radius:8px;border:1px solid #cbd5e1"><option value="pdf">PDF</option><option value="png">PNG</option><option value="both">PDF + PNG</option></select>
+    <button id="dl" type="button">{% if preview %}Download{% else %}Email me the certificate{% endif %}</button>
+    <span id="status" style="font-size:13px;margin-left:8px"></span>
+    <button onclick="window.print()">Print</button>
+    {% if preview %}<a class="alt" href="javascript:history.back()">Back</a>{% else %}<a class="alt" href="{% url 'applicant_certificate' %}">Back</a>{% endif %}
+</div>
+<div class="stage">
+<div class="page">
+ <div class="border-outer"><div class="border-mid"><div class="inner">
+    <div class="logos">
+        <div class="logo-hd"><img src="{% static 'img/HG-Debates.webp' %}" alt="Hargeisa Debates"></div>
+        <div class="logo-hbs"><img src="{% static 'img/heinrich böll stiftung.png' %}" alt="Heinrich Böll Stiftung - Horn of Africa"></div>
+    </div>
+    <h1>{{ cert.title }}</h1>
+    <div class="certify">This is to certify that <span class="name">{{ sub.applicant_name }}</span></div>
+    <div class="line">{{ cert.workshop_text }}</div>
+    <div class="program">&ldquo;{{ program_title }}&rdquo;</div>
+    <div class="desc">{{ cert.description }}</div>
+    <div class="foot">
+        <div class="sig"><div class="sp">{% if cert.signer1_signature %}<img src="{{ cert.signer1_signature.url }}" alt="Signature">{% endif %}</div><div class="l">{{ cert.signer1_title }}</div>
+            <div class="meta">Date: {% if cert.issue_date %}{{ cert.issue_date|date:"d F Y" }}{% else %}&mdash;{% endif %}</div></div>
+        <div class="sig"><div class="sp">{% if cert.signer2_signature %}<img src="{{ cert.signer2_signature.url }}" alt="Signature">{% endif %}</div><div class="l">{{ cert.signer2_title }}</div>
+            <div class="meta">Certificate No: {{ number }}</div></div>
+    </div>
+ </div></div></div>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
+window.renderCertificateBlobs = async function (fmt) {
+        if (document.fonts) await document.fonts.ready;
+        var canvas = await html2canvas(document.querySelector('.page'), {
+            scale: 2, useCORS: true, backgroundColor: null,
+            onclone: function (doc) {
+                var p = doc.querySelector('.page');
+                p.style.zoom = 1; p.style.boxShadow = 'none';
+                var m = doc.querySelector('.border-mid'), w = m.offsetWidth, h = m.offsetHeight, t = 5 * 96 / 25.4;
+                var tw = w / Math.round(w / t), th = h / Math.round(h / t);
+                m.style.backgroundImage = 'none'; m.style.position = 'relative';
+                var box = doc.createElement('div');
+                box.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" style="position:absolute;left:0;top:0"><defs><pattern id="bp" patternUnits="userSpaceOnUse" width="' + tw + '" height="' + th + '" viewBox="0 0 50 50" preserveAspectRatio="none"><g fill="none" stroke="#7d838d" stroke-width="1.6"><path d="M0 25 C12 3 13 3 25 25 S38 47 50 25"/><path d="M0 25 C12 47 13 47 25 25 S38 3 50 25"/><circle cx="25" cy="25" r="7"/><circle cx="0" cy="25" r="7"/><circle cx="50" cy="25" r="7"/><circle cx="25" cy="25" r="2.5"/><path d="M0 2 Q12.5 14 25 2 Q37.5 14 50 2"/><path d="M0 48 Q12.5 36 25 48 Q37.5 36 50 48"/></g></pattern></defs><rect width="' + w + '" height="' + h + '" fill="url(#bp)"/></svg>';
+                m.insertBefore(box.firstChild, m.firstChild);
+            }
+        });
+        var fmts = fmt === 'both' ? ['pdf', 'png'] : [fmt], blobs = {};
+        for (var f of fmts) {
+            if (f === 'png') {
+                blobs.png = await new Promise(function (r) { canvas.toBlob(r, 'image/png'); });
+            } else {
+                var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+                blobs.pdf = pdf.output('blob');
+            }
+        }
+        return blobs;
+};
+document.getElementById('dl').addEventListener('click', async function () {
+    var btn = this, st = document.getElementById('status'), fmt = document.getElementById('fmt').value;
+    btn.disabled = true; st.textContent = 'Preparing certificate...';
+    try {
+        var blobs = await window.renderCertificateBlobs(fmt), fmts = Object.keys(blobs);
+        {% if preview %}fmts.forEach(function (f) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blobs[f]); a.download = 'certificate.' + f;
+            document.body.appendChild(a); a.click(); a.remove();
+        });
+        st.textContent = 'Downloaded'; btn.disabled = false; return;{% endif %}
+        st.textContent = 'Sending to your email...';
+        var fd = new FormData();
+        fmts.forEach(function (f) { fd.append(f, blobs[f], 'certificate.' + f); });
+        var res = await fetch("{% url 'applicant_certificate_send' %}", {
+            method: 'POST', body: fd, headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        });
+        var data = await res.json();
+        st.textContent = data.ok ? 'Certificate sent to ' + data.email : 'Could not send email: ' + data.error;
+    } catch (e) {
+        st.textContent = 'Something went wrong: ' + e.message;
+    }
+    btn.disabled = false;
+});
+</script>
+<script>
+(function () {
+    var page = document.querySelector('.page');
+    function fit() {
+        var pw = 297 * 96 / 25.4, avail = document.documentElement.clientWidth - 16;
+        page.style.zoom = window.matchMedia('print').matches ? 1 : Math.min(1, avail / pw);
+    }
+    fit(); window.addEventListener('resize', fit);
+    window.addEventListener('beforeprint', function () { page.style.zoom = 1; });
+    window.addEventListener('afterprint', fit);
+})();
+</script>
+<script>
+document.querySelectorAll('.desc').forEach(function (el) {
+    el.innerHTML = el.innerHTML
+        .replace(/Heinrich B(?:ö|&ouml;)ll Stiftung/g, '<span class="hbs">$&</span>')
+        .replace(/Hargeisa Debates Office/g, '<span class="hdo">$&</span>');
+});
+</script>
+</body>
+</html>

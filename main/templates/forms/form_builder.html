@@ -1,0 +1,594 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Form - {{ form.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <a href="{% url 'form_list' %}" class="flex items-center text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Forms
+            </a>
+            <div class="flex space-x-3">
+                <a href="{% url 'form_edit' form.id %}" class="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    Settings
+                </a>
+                <a href="{% url 'public_form_view' form.id %}" target="_blank" class="px-4 py-2 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    Preview Form
+                </a>
+            </div>
+        </div>
+
+        <!-- Form Info -->
+        <div class="glass p-6 rounded-2xl shadow-lg mb-6 border-2 border-teal-500/20">
+            <h1 class="text-2xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ form.title }}</h1>
+            {% if form.description %}
+            <p class="text-gray-600 dark:text-gray-300 mb-4">{{ form.description }}</p>
+            {% endif %}
+            <div class="mt-4 flex items-center space-x-4 text-sm">
+                <span class="px-3 py-1 rounded-full {% if form.is_active %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
+                    {% if form.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+                <span class="text-gray-500 dark:text-gray-400">
+                    {{ fields.count }} fields
+                </span>
+            </div>
+        </div>
+
+        <!-- Add Section Button -->
+        <div class="glass p-6 rounded-2xl shadow-lg mb-6 border-2 border-teal-500/20">
+            <button onclick="openSectionModal()" class="w-full px-6 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 flex items-center justify-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Add New Section</span>
+            </button>
+        </div>
+
+        <!-- Sections and Fields List -->
+        <div id="sections-container" class="space-y-6">
+            {% for section in sections %}
+            <div class="section-card glass p-6 rounded-2xl shadow-lg border-2 border-purple-500/20" data-section-id="{{ section.id }}">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ section.title|default:"Untitled Section" }}</h3>
+                        {% if section.description %}
+                        <p class="text-gray-600 dark:text-gray-300">{{ section.description }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="editSection({{ section.id }}, '{{ section.title }}', '{{ section.description }}')" class="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="deleteSection({{ section.id }})" class="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="fields-in-section space-y-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <!-- Add Question Buttons for this Section -->
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Add question to this section:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="openFieldModal('text', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Short Answer</button>
+                            <button onclick="openFieldModal('textarea', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Paragraph</button>
+                            <button onclick="openFieldModal('email', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Email</button>
+                            <button onclick="openFieldModal('number', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Number</button>
+                            <button onclick="openFieldModal('date', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Date</button>
+                            <button onclick="openFieldModal('select', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Dropdown</button>
+                            <button onclick="openFieldModal('radio', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Multiple Choice</button>
+                            <button onclick="openFieldModal('checkbox', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">Checkboxes</button>
+                            <button onclick="openFieldModal('file', '', false, '', '', {{ section.id }})" class="px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-teal-500 dark:hover:border-teal-400 text-sm text-gray-700 dark:text-gray-300 transition-all">File Upload</button>
+                        </div>
+                    </div>
+                    
+                    {% for field in section.fields.all %}
+                    <div class="field-card glass p-4 rounded-xl border-2 border-teal-500/20" data-field-id="{{ field.id }}" draggable="true">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-3 flex-1">
+                                <div class="drag-handle mt-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="text-xs font-semibold px-2 py-1 bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 rounded-full">
+                                            {{ field.get_field_type_display }}
+                                        </span>
+                                        {% if field.is_required %}
+                                        <span class="text-xs font-semibold px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">Required</span>
+                                        {% endif %}
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">{{ field.label }}</h4>
+                                    {% if field.placeholder %}
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Placeholder: {{ field.placeholder }}</p>
+                                    {% endif %}
+                                    {% if field.options %}
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Options: {{ field.options }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="editField({{ field.id }}, '{{ field.field_type }}', '{{ field.label }}', {{ field.is_required|lower }}, '{{ field.placeholder }}', '{{ field.options }}', {{ section.id }})" class="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                <button onclick="deleteField({{ field.id }})" class="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        No questions in this section yet
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% empty %}
+            
+            <!-- Fields without sections (legacy) -->
+            <div id="fields-container" class="space-y-4">
+                {% for field in fields %}
+                {% if not field.section %}
+                <div class="field-card glass p-6 rounded-2xl shadow-lg border-2 border-teal-500/20" data-field-id="{{ field.id }}" draggable="true">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-3 flex-1">
+                            <div class="drag-handle mt-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-xs font-semibold px-2 py-1 bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 rounded-full">
+                                        {{ field.get_field_type_display }}
+                                    </span>
+                                    {% if field.is_required %}
+                                    <span class="text-xs font-semibold px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">Required</span>
+                                    {% endif %}
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">{{ field.label }}</h4>
+                                {% if field.placeholder %}
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Placeholder: {{ field.placeholder }}</p>
+                                {% endif %}
+                                {% if field.options %}
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Options: {{ field.options }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="editField({{ field.id }}, '{{ field.field_type }}', '{{ field.label }}', {{ field.is_required|lower }}, '{{ field.placeholder }}', '{{ field.options }}', null)" class="p-2 text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteField({{ field.id }})" class="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% if not fields %}
+            <div class="glass p-12 rounded-2xl text-center border-2 border-dashed border-teal-500/30">
+                <svg class="w-16 h-16 text-teal-600 dark:text-teal-400 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Sections or Questions Yet</h3>
+                <p class="text-gray-600 dark:text-gray-300">Add a section to organize your questions</p>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Section Modal -->
+<div id="section-modal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 border-2 border-purple-500/20">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="section-modal-title" class="text-xl font-bold text-gray-900 dark:text-white">Add Section</h3>
+            <button onclick="closeSectionModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="section-form" method="post" action="{% url 'section_add' form.id %}">
+            {% csrf_token %}
+            <input type="hidden" id="edit-section-id" name="edit_section_id" value="">
+            
+            <div class="mb-4">
+                <label for="section-title" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Section Title</label>
+                <input type="text" id="section-title" name="title" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all hover:border-purple-500" placeholder="e.g., Personal Information">
+            </div>
+            
+            <div class="mb-6">
+                <label for="section-description" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Description (optional)</label>
+                <textarea id="section-description" name="description" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none hover:border-purple-500" placeholder="Add a description for this section..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeSectionModal()" class="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add/Edit Field Modal -->
+<div id="field-modal" class="modal fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="glass bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 border-2 border-teal-500/20">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-900 dark:text-white">Add Question</h3>
+            <button onclick="closeFieldModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="field-form" method="post" action="{% url 'field_add' form.id %}">
+            {% csrf_token %}
+            <input type="hidden" id="field-type" name="field_type" value="">
+            <input type="hidden" id="edit-field-id" name="edit_field_id" value="">
+            
+            <div class="mb-4">
+                <label for="field-label" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Question *</label>
+                <input type="text" id="field-label" name="label" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500" placeholder="Enter your question" required>
+            </div>
+            
+            <div class="mb-4">
+                <label for="field-section" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Section</label>
+                <select id="field-section" name="section" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                    <option value="">No Section</option>
+                    {% for section in sections %}
+                    <option value="{{ section.id }}">{{ section.title|default:"Untitled Section" }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="field-placeholder" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Placeholder (optional)</label>
+                <input type="text" id="field-placeholder" name="placeholder" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500" placeholder="Enter placeholder text">
+            </div>
+            
+            <div id="options-container" class="mb-4 hidden">
+                <label for="field-options" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Options (comma-separated)</label>
+                <textarea id="field-options" name="options" rows="3" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none hover:border-teal-500" placeholder="Option 1, Option 2, Option 3"></textarea>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Separate each option with a comma</p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" id="field-required" name="is_required" class="w-5 h-5 text-teal-600 border-gray-300 focus:ring-teal-500 rounded">
+                    <span class="text-gray-700 dark:text-gray-300 font-medium">Required field</span>
+                </label>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeFieldModal()" class="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+.message-enter {
+    animation: slideUp 0.3s ease-out;
+}
+
+.message-exit {
+    animation: slideDown 0.3s ease-out;
+}
+</style>
+
+<script>
+let currentEditFieldId = null;
+let currentEditSectionId = null;
+
+function showMessage(message, type = 'success') {
+    const msgDiv = document.createElement('div');
+    const isError = type === 'error';
+    
+    msgDiv.className = `message-enter glass rounded-xl p-4 shadow-lg border mb-4 flex items-center gap-3 text-sm font-medium ${
+        isError 
+            ? 'bg-red-500/10 border-red-200 text-red-800 dark:bg-red-500/20 dark:border-red-800 dark:text-red-200' 
+            : 'bg-emerald-500/10 border-emerald-200 text-emerald-800 dark:bg-emerald-500/20 dark:border-emerald-800 dark:text-emerald-200'
+    }`;
+    
+    msgDiv.innerHTML = `
+        <span class="material-symbols-outlined text-lg">${isError ? 'error' : 'check_circle'}</span>
+        <p>${message}</p>
+    `;
+    
+    const form = document.querySelector('form');
+    if (form) {
+        form.parentNode.insertBefore(msgDiv, form);
+        setTimeout(() => {
+            msgDiv.style.animation = 'slideUp 0.3s ease-out reverse';
+            setTimeout(() => msgDiv.remove(), 300);
+        }, 3000);
+    }
+}
+
+function openSectionModal(title =  '', description = '') {
+    const modal = document.getElementById('section-modal');
+    const modalTitle = document.getElementById('section-modal-title');
+    const sectionForm = document.getElementById('section-form');
+    
+    document.getElementById('section-title').value = title;
+    document.getElementById('section-description').value = description;
+    
+    if (title) {
+        modalTitle.textContent = 'Edit Section';
+        sectionForm.action = `{% url 'section_edit' 0 %}`.replace('0', currentEditSectionId);
+    } else {
+        modalTitle.textContent = 'Add Section';
+        sectionForm.action = `{% url 'section_add' form.id %}`;
+        currentEditSectionId = null;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeSectionModal() {
+    const modal = document.getElementById('section-modal');
+    modal.classList.add('hidden');
+    currentEditSectionId = null;
+    document.getElementById('section-form').reset();
+}
+
+function editSection(sectionId, title, description) {
+    currentEditSectionId = sectionId;
+    openSectionModal(title, description);
+}
+
+function deleteSection(sectionId) {
+    if (confirm('Are you sure you want to delete this section? All questions in this section will also be deleted.')) {
+        fetch(`{% url 'section_delete' 0 %}`.replace('0', sectionId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage('Section deleted successfully', 'success');
+                location.reload();
+            } else {
+                showMessage('Error deleting section', 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error deleting section', 'error');
+        });
+    }
+}
+
+function openFieldModal(fieldType, label = '', isRequired = false, placeholder = '', options = '', sectionId = null) {
+    const modal = document.getElementById('field-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const fieldForm = document.getElementById('field-form');
+    const optionsContainer = document.getElementById('options-container');
+    
+    document.getElementById('field-type').value = fieldType;
+    document.getElementById('field-label').value = label;
+    document.getElementById('field-placeholder').value = placeholder;
+    document.getElementById('field-options').value = options;
+    document.getElementById('field-required').checked = isRequired;
+    document.getElementById('field-section').value = sectionId || '';
+    
+    if (['select', 'radio', 'checkbox'].includes(fieldType)) {
+        optionsContainer.classList.remove('hidden');
+    } else {
+        optionsContainer.classList.add('hidden');
+    }
+    
+    if (label) {
+        modalTitle.textContent = 'Edit Question';
+        fieldForm.action = `{% url 'field_edit' 0 %}`.replace('0', currentEditFieldId);
+    } else {
+        modalTitle.textContent = 'Add Question';
+        fieldForm.action = `{% url 'field_add' form.id %}`;
+        currentEditFieldId = null;
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeFieldModal() {
+    const modal = document.getElementById('field-modal');
+    modal.classList.add('hidden');
+    currentEditFieldId = null;
+    document.getElementById('field-form').reset();
+}
+
+function editField(fieldId, fieldType, label, isRequired, placeholder, options, sectionId) {
+    currentEditFieldId = fieldId;
+    openFieldModal(fieldType, label, isRequired, placeholder, options, sectionId);
+}
+
+function deleteField(fieldId) {
+    if (confirm('Are you sure you want to delete this question?')) {
+        fetch(`{% url 'field_delete' 0 %}`.replace('0', fieldId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage('Question deleted successfully', 'success');
+                location.reload();
+            } else {
+                showMessage('Error deleting question', 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error deleting question', 'error');
+        });
+    }
+}
+
+// Handle form submission via AJAX
+document.getElementById('field-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const formData = new FormData(this);
+    const url = this.action;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Question saved successfully', 'success');
+            closeFieldModal();
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showMessage('Error saving field: ' + (data.error || 'Unknown error'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error saving field. Please try again.', 'error');
+    });
+});
+
+document.getElementById('section-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const formData = new FormData(this);
+    const url = this.action;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Section saved successfully', 'success');
+            closeSectionModal();
+            setTimeout(() => location.reload(), 500);
+        } else {
+            showMessage('Error saving section', 'error');
+        }
+    })
+    .catch(error => {
+        showMessage('Error saving section', 'error');
+    });
+});
+
+// Auto-capitalize first letter of each word
+function capitalizeWords(text) {
+    return text.replace(/\b\w/g, function(char) {
+        return char.toUpperCase();
+    });
+}
+
+function attachCapitalization(inputId) {
+    const element = document.getElementById(inputId);
+    if (element && !element.dataset.capitalized) {
+        element.dataset.capitalized = 'true';
+        element.addEventListener('input', function(e) {
+            const cursorPosition = e.target.selectionStart;
+            const originalValue = e.target.value;
+            const capitalized = capitalizeWords(originalValue);
+            
+            if (originalValue !== capitalized) {
+                e.target.value = capitalized;
+                e.target.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        });
+    }
+}
+
+const originalOpenFieldModal = openFieldModal;
+openFieldModal = function(fieldType, label = '', isRequired = false, placeholder = '', options = '', sectionId = null) {
+    originalOpenFieldModal(fieldType, label, isRequired, placeholder, options, sectionId);
+    setTimeout(() => {
+        attachCapitalization('field-label');
+        attachCapitalization('field-placeholder');
+        attachCapitalization('field-options');
+    }, 100);
+};
+
+const originalOpenSectionModal = openSectionModal;
+openSectionModal = function(title = '', description = '') {
+    originalOpenSectionModal(title, description);
+    setTimeout(() => {
+        attachCapitalization('section-title');
+        attachCapitalization('section-description');
+    }, 100);
+};
+</script>
+{% endblock %}

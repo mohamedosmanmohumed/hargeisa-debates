@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Submission Details - {{ submission.form.title }} - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-8">
+            <a href="{% url 'form_submissions' submission.form.id %}" class="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 flex items-center space-x-2 mb-4">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Back to Submissions</span>
+            </a>
+            <h1 class="text-3xl sm:text-4xl font-bold font-space text-gray-900 dark:text-white mb-2">Submission Details</h1>
+            <p class="text-gray-600 dark:text-gray-300">{{ submission.form.title }}</p>
+        </div>
+
+        <!-- Applicant Information -->
+        <div class="glass p-6 rounded-2xl shadow-lg mb-6 border-2 border-teal-500/20">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Applicant Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="text-sm text-gray-500 dark:text-gray-400">Name</label>
+                    <p class="text-gray-900 dark:text-white font-medium">{{ submission.applicant_name }}</p>
+                </div>
+                <div>
+                    <label class="text-sm text-gray-500 dark:text-gray-400">Email</label>
+                    <p class="text-gray-900 dark:text-white font-medium">{{ submission.applicant_email }}</p>
+                </div>
+                <div>
+                    <label class="text-sm text-gray-500 dark:text-gray-400">Phone</label>
+                    <p class="text-gray-900 dark:text-white font-medium">{{ submission.applicant_phone|default:"-" }}</p>
+                </div>
+                <div>
+                    <label class="text-sm text-gray-500 dark:text-gray-400">Submitted</label>
+                    <p class="text-gray-900 dark:text-white font-medium">{{ submission.submitted_at|date:"M d, Y, g:i A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass p-6 rounded-2xl shadow-lg mb-6 border-2 border-teal-500/20">
+            <p class="mb-3 text-gray-700 dark:text-gray-300">Status: <strong>{{ submission.get_status_display }}</strong></p>
+            <form method="post" action="{% url 'submissions_bulk_action' submission.form.id %}" class="flex flex-wrap gap-3">
+                {% csrf_token %}
+                <input type="hidden" name="ids" value="{{ submission.id }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                {% if submission.status == 'pending' %}
+                <button type="submit" name="action" value="stage_selected" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Add to Selection</button>
+                {% endif %}
+                {% if submission.status != 'admitted' %}
+                <button type="submit" name="action" value="admit_selected" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">Admit</button>
+                {% endif %}
+                {% if submission.status != 'pending' %}
+                <button type="submit" name="action" value="remove_selected" class="px-4 py-2 border-2 border-red-500 text-red-600 rounded-lg font-medium">Move back to Pending</button>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Answers -->
+        <div class="glass p-6 rounded-2xl shadow-lg border-2 border-teal-500/20">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Responses</h2>
+            <div class="space-y-4">
+                {% for answer in answers %}
+                <div class="pb-4 {% if not forloop.last %}border-b border-gray-200 dark:border-gray-700{% endif %}">
+                    <label class="block text-sm text-gray-500 dark:text-gray-400 mb-1">{{ answer.field.label }}</label>
+                    <p class="text-gray-900 dark:text-white font-medium">{% if answer.field.field_type == 'file' and answer.answer %}<a href="{{ MEDIA_URL }}{{ answer.answer }}" target="_blank" class="text-teal-600 dark:text-teal-400 hover:underline">View file</a>{% else %}{{ answer.answer|default:"-" }}{% endif %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

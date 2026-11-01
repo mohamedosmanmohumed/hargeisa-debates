@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}{{ form.title }} - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Form Header -->
+        <div class="glass p-8 rounded-2xl shadow-lg mb-8 border-2 border-teal-500/20">
+            <h1 class="text-3xl sm:text-4xl font-bold font-space text-gray-900 dark:text-white mb-4">{{ form.title }}</h1>
+            {% if form.description %}
+            <p class="text-lg text-gray-600 dark:text-gray-300">{{ form.description }}</p>
+            {% endif %}
+            
+            <!-- Progress Bar -->
+            {% if sections %}
+            <div class="mt-6">
+                <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>Section <span id="current-section-num">1</span> of <span id="total-sections">{{ sections.count }}</span></span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div id="progress-bar" class="bg-gradient-to-r from-teal-600 to-teal-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Form -->
+        <div class="glass p-8 rounded-2xl shadow-lg border-2 border-teal-500/20">
+            <form method="post" action="{% url 'public_form_submit' form.id %}" id="public-form" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if sections %}
+                <!-- Multi-section form -->
+                {% for section in sections %}
+                <div class="form-section {% if not forloop.first %}hidden{% endif %}" data-section-index="{{ forloop.counter0 }}">
+                    <div class="mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-2xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ section.title|default:"Section" }}</h2>
+                        {% if section.description %}
+                        <p class="text-gray-600 dark:text-gray-300">{{ section.description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% for field in section.fields.all %}
+                    <div class="mb-8 pb-8 {% if not forloop.last %}border-b border-gray-200 dark:border-gray-700{% endif %}">
+                        <label for="field_{{ field.id }}" class="block text-gray-900 dark:text-white font-semibold mb-3">
+                            {{ field.label }}
+                            {% if field.is_required %}<span class="text-red-500">*</span>{% endif %}
+                        </label>
+                        
+                        {% if field.field_type == 'text' %}
+                        <input type="text" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                        
+                        {% elif field.field_type == 'textarea' %}
+                        <textarea id="field_{{ field.id }}" name="field_{{ field.id }}" rows="4" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none hover:border-teal-500"></textarea>
+                        
+                        {% elif field.field_type == 'email' %}
+                        <input type="email" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                        
+                        {% elif field.field_type == 'number' %}
+                        <input type="number" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                        
+                        {% elif field.field_type == 'date' %}
+                        <input type="date" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                        
+                        {% elif field.field_type == 'select' %}
+                        <select id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                            <option value="">Select an option</option>
+                            {% for option in field.options|split %}
+                            <option value="{{ option }}">{{ option }}</option>
+                            {% endfor %}
+                        </select>
+                        
+                        {% elif field.field_type == 'radio' %}
+                        <div class="space-y-3">
+                            {% for option in field.options|split %}
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="radio" name="field_{{ field.id }}" value="{{ option }}" {% if field.is_required %}required{% endif %} class="w-5 h-5 text-teal-600 border-gray-300 focus:ring-teal-500">
+                                <span class="text-gray-700 dark:text-gray-300">{{ option }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif field.field_type == 'checkbox' %}
+                        <div class="space-y-3">
+                            {% for option in field.options|split %}
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" name="field_{{ field.id }}" value="{{ option }}" {% if field.is_required %}data-required{% endif %} class="w-5 h-5 text-teal-600 border-gray-300 focus:ring-teal-500 rounded">
+                                <span class="text-gray-700 dark:text-gray-300">{{ option }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        
+                        {% elif field.field_type == 'file' %}
+                        <input type="file" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                        
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-8">
+                        {% if not forloop.first %}
+                        <button type="button" onclick="previousSection()" class="px-6 py-3 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                            Previous
+                        </button>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
+                        
+                        {% if forloop.last %}
+                        <button type="submit" class="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 pulse-glow">
+                            Submit Registration
+                        </button>
+                        {% else %}
+                        <button type="button" onclick="nextSection()" class="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+                            Next
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <!-- Single section form (no sections) -->
+                {% for field in fields %}
+                <div class="mb-8 pb-8 {% if not forloop.last %}border-b border-gray-200 dark:border-gray-700{% endif %}">
+                    <label for="field_{{ field.id }}" class="block text-gray-900 dark:text-white font-semibold mb-3">
+                        {{ field.label }}
+                        {% if field.is_required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    
+                    {% if field.field_type == 'text' %}
+                    <input type="text" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                    
+                    {% elif field.field_type == 'textarea' %}
+                    <textarea id="field_{{ field.id }}" name="field_{{ field.id }}" rows="4" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none hover:border-teal-500"></textarea>
+                    
+                    {% elif field.field_type == 'email' %}
+                    <input type="email" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                    
+                    {% elif field.field_type == 'number' %}
+                    <input type="number" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.placeholder %}placeholder="{{ field.placeholder }}"{% endif %} {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                    
+                    {% elif field.field_type == 'date' %}
+                    <input type="date" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                    
+                    {% elif field.field_type == 'select' %}
+                    <select id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                        <option value="">Select an option</option>
+                        {% for option in field.options|split %}
+                        <option value="{{ option }}">{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    {% elif field.field_type == 'radio' %}
+                    <div class="space-y-3">
+                        {% for option in field.options|split %}
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="radio" name="field_{{ field.id }}" value="{{ option }}" {% if field.is_required %}required{% endif %} class="w-5 h-5 text-teal-600 border-gray-300 focus:ring-teal-500">
+                            <span class="text-gray-700 dark:text-gray-300">{{ option }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    
+                    {% elif field.field_type == 'checkbox' %}
+                    <div class="space-y-3">
+                        {% for option in field.options|split %}
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" name="field_{{ field.id }}" value="{{ option }}" {% if field.is_required %}data-required{% endif %} class="w-5 h-5 text-teal-600 border-gray-300 focus:ring-teal-500 rounded">
+                            <span class="text-gray-700 dark:text-gray-300">{{ option }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    
+                    {% elif field.field_type == 'file' %}
+                    <input type="file" id="field_{{ field.id }}" name="field_{{ field.id }}" {% if field.is_required %}required{% endif %} class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all hover:border-teal-500">
+                    
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit" class="px-8 py-4 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 pulse-glow">
+                        Submit Registration
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if sections %}
+<script>
+let currentSection = 0;
+const totalSections = {{ sections.count }};
+
+function updateProgress() {
+    const progress = ((currentSection + 1) / totalSections) * 100;
+    document.getElementById('progress-bar').style.width = progress + '%';
+    document.getElementById('progress-percent').textContent = Math.round(progress) + '%';
+    document.getElementById('current-section-num').textContent = currentSection + 1;
+}
+
+function showSection(index) {
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, i) => {
+        if (i === index) {
+            section.classList.remove('hidden');
+        } else {
+            section.classList.add('hidden');
+        }
+    });
+    currentSection = index;
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateSection(sectionEl) {
+    let firstInvalid = null;
+    const mark = (el, ok) => {
+        el.classList.toggle('border-red-500', !ok);
+        if (!ok && !firstInvalid) firstInvalid = el;
+    };
+    const groups = {};
+    sectionEl.querySelectorAll('[required], [data-required]').forEach(field => {
+        if (field.type === 'radio' || field.type === 'checkbox') {
+            (groups[field.name] = groups[field.name] || []).push(field);
+        } else {
+            mark(field, field.value.trim() !== '' && field.checkValidity());
+        }
+    });
+    Object.values(groups).forEach(inputs => {
+        const ok = inputs.some(i => i.checked);
+        const box = inputs[0].closest('.space-y-3');
+        box.classList.toggle('ring-2', !ok);
+        box.classList.toggle('ring-red-500', !ok);
+        box.classList.toggle('rounded-lg', !ok);
+        box.classList.toggle('p-2', !ok);
+        if (!ok && !firstInvalid) firstInvalid = inputs[0];
+    });
+    if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        alert('Please fill in all required fields before proceeding.');
+    }
+    return !firstInvalid;
+}
+
+function nextSection() {
+    if (currentSection < totalSections - 1) {
+        const currentSectionEl = document.querySelectorAll('.form-section')[currentSection];
+        if (validateSection(currentSectionEl)) showSection(currentSection + 1);
+    }
+}
+
+document.getElementById('public-form').addEventListener('submit', function (e) {
+    const sections = document.querySelectorAll('.form-section');
+    for (let i = 0; i < sections.length; i++) {
+        sections[i].classList.remove('hidden');
+        if (!validateSection(sections[i])) {
+            e.preventDefault();
+            showSection(i);
+            return;
+        }
+        sections[i].classList.add('hidden');
+    }
+    sections[currentSection].classList.remove('hidden');
+});
+
+function previousSection() {
+    if (currentSection > 0) {
+        showSection(currentSection - 1);
+    }
+}
+
+// Initialize
+updateProgress();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Applications Closed - {{ form.title }} - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 flex items-center justify-center">
+    <div class="glass max-w-xl w-full p-10 rounded-2xl shadow-lg text-center border-2 border-teal-500/20">
+        <h1 class="text-3xl font-bold font-space text-gray-900 dark:text-white mb-4">{{ form.title }}</h1>
+        <h2 class="text-xl font-semibold text-red-600 dark:text-red-400 mb-3">Applications are closed</h2>
+        <p class="text-gray-600 dark:text-gray-300">This form is no longer accepting responses. Thank you for your interest.</p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'applicant/layout.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="font-space text-3xl font-bold mb-1">Hello, {{ sub.applicant_name|default:"there" }}</h1>
+<p class="text-slate-600 mb-6">You have been admitted to <strong>{{ form.title }}</strong>. Congratulations!</p>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-2xl p-5 shadow-sm border"><div class="text-sm text-slate-500">Status</div><div class="text-2xl font-bold text-green-600 mt-1">Admitted</div></div>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border"><div class="text-sm text-slate-500">Upcoming sessions</div><div class="text-2xl font-bold mt-1">{{ upcoming_count }}</div></div>
+    <div class="bg-white rounded-2xl p-5 shadow-sm border"><div class="text-sm text-slate-500">Attendance rate</div>
+        <div class="text-2xl font-bold mt-1">{% if rate is None %}&mdash;{% else %}{{ rate }}%{% endif %}</div>
+        <div class="text-xs text-slate-500">{{ held_count }} session(s) held so far</div></div>
+</div>
+
+<div class="grid md:grid-cols-2 gap-4">
+    <section class="bg-white rounded-2xl p-5 shadow-sm border">
+        <h2 class="font-semibold mb-3">Next session</h2>
+        {% if next_session %}
+        <div class="font-semibold text-teal-700">{{ next_session.title }}</div>
+        <div class="text-slate-600 text-sm mt-1">{{ next_session.date|date:"l, F j, Y" }}{% if next_session.start_time %} &middot; {{ next_session.start_time|time:"g:i A" }}{% if next_session.end_time %} - {{ next_session.end_time|time:"g:i A" }}{% endif %}{% endif %}</div>
+        {% if next_session.location %}<div class="text-slate-600 text-sm">Location: {{ next_session.location }}</div>{% endif %}
+        {% if next_session.description %}<p class="text-sm mt-2">{{ next_session.description }}</p>{% endif %}
+        {% else %}<p class="text-slate-500 text-sm">No upcoming sessions scheduled yet. Check back soon.</p>{% endif %}
+        <a href="{% url 'applicant_schedule' %}" class="inline-block mt-3 text-teal-700 font-medium text-sm">Full schedule &rarr;</a>
+    </section>
+    <section class="bg-white rounded-2xl p-5 shadow-sm border">
+        <h2 class="font-semibold mb-3">Latest announcements</h2>
+        {% for a in announcements %}
+        <div class="mb-3 pb-3 border-b last:border-0"><div class="font-medium">{{ a.title }}</div><div class="text-xs text-slate-500">{{ a.created_at|date:"M d, Y" }}</div><p class="text-sm text-slate-600 mt-1">{{ a.body|truncatewords:25 }}</p></div>
+        {% empty %}<p class="text-slate-500 text-sm">No announcements yet.</p>{% endfor %}
+        <a href="{% url 'applicant_announcements' %}" class="inline-block text-teal-700 font-medium text-sm">All announcements &rarr;</a>
+    </section>
+</div>
+
+<section class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mt-4 text-sm">
+    <strong>Security tip:</strong> if you signed in with a temporary password, please <a href="{% url 'applicant_password' %}" class="underline font-medium">change your password</a>.
+</section>
+{% endblock %}

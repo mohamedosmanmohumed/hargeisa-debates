@@ -1,0 +1,62 @@
+{% extends 'applicant/layout.html' %}
+{% block title %}Schedule{% endblock %}
+{% block content %}
+<h1 class="font-space text-3xl font-bold mb-4">Schedule</h1>
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="flex items-center gap-2">
+        {% if nav.prev %}<a href="?week={{ nav.prev }}" class="px-3 py-2 bg-white border rounded-lg text-sm font-medium">&larr; Previous</a>{% else %}<span class="px-3 py-2 border rounded-lg text-sm text-slate-300">&larr; Previous</span>{% endif %}
+        <div class="px-2 text-center">
+            <div class="font-semibold">Week {{ nav.week }} of {{ nav.weeks }}{% if nav.is_current %} <span class="text-xs bg-teal-100 text-teal-800 rounded-full px-2 py-0.5 align-middle">This week</span>{% endif %}</div>
+            <div class="text-xs text-slate-500">{{ nav.first|date:"M d" }} - {{ nav.last|date:"M d, Y" }}</div>
+        </div>
+        {% if nav.next %}<a href="?week={{ nav.next }}" class="px-3 py-2 bg-white border rounded-lg text-sm font-medium">Next &rarr;</a>{% else %}<span class="px-3 py-2 border rounded-lg text-sm text-slate-300">Next &rarr;</span>{% endif %}
+    </div>
+    {% if nav.weeks > 1 %}
+    <div class="flex flex-wrap gap-1">
+        {% for w in nav.all %}<a href="?week={{ w.n }}" title="{{ w.first|date:'M d' }}" class="px-3 py-1 rounded-lg text-sm border {% if w.n == nav.week %}bg-teal-600 text-white border-teal-600{% else %}bg-white text-slate-700{% endif %}">{{ w.n }}</a>{% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="space-y-5">
+    {% for d in days %}
+    <div class="bg-white rounded-2xl shadow-sm border {% if d.is_today %}border-teal-500 border-2{% endif %} overflow-hidden">
+        <div class="px-5 py-3 bg-teal-50 text-teal-900 font-semibold flex justify-between">
+            <span>{{ d.date|date:"l" }}, {{ d.date|date:"M d, Y" }}</span>
+            {% if d.is_today %}<span class="text-xs bg-teal-600 text-white rounded-full px-2 py-1">Today</span>{% endif %}
+        </div>
+        <div class="divide-y">
+            {% for sl in d.slots %}
+            {% if sl.is_break %}
+            <div class="px-5 py-2 text-sm text-amber-700 bg-amber-50/50 flex gap-4"><span class="w-32 font-mono text-xs pt-0.5">{{ sl.start|time:"g:i A" }} - {{ sl.end|time:"g:i A" }}</span><span>&#9749; Break</span></div>
+            {% elif sl.session %}
+            <div class="px-5 py-3 flex gap-4">
+                <span class="w-32 font-mono text-xs pt-1 text-slate-600 shrink-0">{{ sl.start|time:"g:i A" }} - {{ sl.end|time:"g:i A" }}</span>
+                <div>
+                    <div class="font-semibold">{{ sl.session.title }}</div>
+                    <div class="text-sm text-slate-600">{% if sl.session.facilitator %}{{ sl.session.facilitator }}{% endif %}{% if sl.session.facilitator and sl.session.location %} &middot; {% endif %}{{ sl.session.location }}</div>
+                    {% if sl.session.description %}<p class="text-sm mt-1 text-slate-600">{{ sl.session.description }}</p>{% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="px-5 py-2 text-sm text-slate-400 flex gap-4"><span class="w-32 font-mono text-xs pt-0.5">{{ sl.start|time:"g:i A" }} - {{ sl.end|time:"g:i A" }}</span><span>To be announced</span></div>
+            {% endif %}
+            {% empty %}
+            <div class="px-5 py-3 text-sm text-slate-400">No sessions planned.</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-slate-500">No work days in this week.</p>
+    {% endfor %}
+</div>
+
+{% if loose %}
+<h2 class="font-semibold text-lg mt-8 mb-3">Other sessions this week</h2>
+<div class="space-y-2">
+    {% for s in loose %}
+    <div class="bg-white rounded-xl px-5 py-3 border text-sm"><span class="font-medium">{{ s.title }}</span> <span class="text-slate-500">&middot; {{ s.date|date:"D, M d" }}{% if s.start_time %} &middot; {{ s.start_time|time:"g:i A" }}{% endif %}{% if s.location %} &middot; {{ s.location }}{% endif %}</span></div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

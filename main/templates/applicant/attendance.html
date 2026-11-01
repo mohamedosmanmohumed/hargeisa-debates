@@ -1,0 +1,28 @@
+{% extends 'applicant/layout.html' %}
+{% block title %}My Attendance{% endblock %}
+{% block content %}
+<h1 class="font-space text-3xl font-bold mb-6">My Attendance</h1>
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+    <div class="bg-white rounded-2xl p-4 border shadow-sm"><div class="text-xs text-slate-500">Rate</div><div class="text-2xl font-bold">{% if rate is None %}&mdash;{% else %}{{ rate }}%{% endif %}</div></div>
+    <div class="bg-white rounded-2xl p-4 border shadow-sm"><div class="text-xs text-slate-500">Present</div><div class="text-2xl font-bold text-green-600">{{ counts.present }}</div></div>
+    <div class="bg-white rounded-2xl p-4 border shadow-sm"><div class="text-xs text-slate-500">Late</div><div class="text-2xl font-bold text-amber-600">{{ counts.late }}</div></div>
+    <div class="bg-white rounded-2xl p-4 border shadow-sm"><div class="text-xs text-slate-500">Excused</div><div class="text-2xl font-bold text-blue-600">{{ counts.excused }}</div></div>
+    <div class="bg-white rounded-2xl p-4 border shadow-sm"><div class="text-xs text-slate-500">Absent</div><div class="text-2xl font-bold text-red-600">{{ counts.absent }}</div></div>
+</div>
+<div class="bg-white rounded-2xl border shadow-sm overflow-x-auto">
+    <table class="w-full text-sm">
+        <thead class="bg-slate-100 text-left text-slate-600"><tr><th class="px-4 py-3">Session</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">Status</th></tr></thead>
+        <tbody class="divide-y">
+        {% for r in rows %}
+        <tr>
+            <td class="px-4 py-3 font-medium">{{ r.session.title }}</td>
+            <td class="px-4 py-3">{{ r.session.date|date:"M d, Y" }}</td>
+            <td class="px-4 py-3"><span class="px-3 py-1 rounded-full text-xs font-semibold {% if r.status == 'present' %}bg-green-100 text-green-800{% elif r.status == 'late' %}bg-amber-100 text-amber-800{% elif r.status == 'excused' %}bg-blue-100 text-blue-800{% elif r.status == 'absent' %}bg-red-100 text-red-800{% else %}bg-slate-100 text-slate-600{% endif %}">{{ r.label }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="px-4 py-6 text-center text-slate-500">No sessions have taken place yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

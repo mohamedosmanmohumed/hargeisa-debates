@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<section class="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div class="absolute top-20 left-10 w-72 h-72 bg-teal-400 dark:bg-teal-600 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+    <div class="absolute bottom-20 right-10 w-72 h-72 bg-teal-300 dark:bg-teal-700 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style="animation-delay: 2s;"></div>
+
+    <div class="max-w-5xl mx-auto relative z-10">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl sm:text-5xl font-bold font-space text-gray-900 dark:text-white mb-4 fade-in-up">
+                Registration <span class="gradient-text text-glow">Portal</span>
+            </h1>
+            <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto fade-in-up stagger-2">
+                Choose an event or program below and fill in the form to register.
+            </p>
+        </div>
+
+        {% if forms %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for form in forms %}
+            <a href="{% url 'public_form_view' form.id %}" class="glass p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 hover-lift border-2 border-teal-500/20 flex flex-col">
+                <h2 class="text-xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ form.title }}</h2>
+                <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-1">{{ form.description|truncatewords:30 }}</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ form.field_count }} question{{ form.field_count|pluralize }}</span>
+                    <span class="px-5 py-2 bg-gradient-to-r from-teal-600 to-teal-500 text-white text-sm font-semibold rounded-lg">Register</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass p-12 rounded-2xl text-center border-2 border-teal-500/20">
+            <h2 class="text-xl font-bold font-space text-gray-900 dark:text-white mb-2">No registrations are open right now</h2>
+            <p class="text-gray-600 dark:text-gray-300">Please check back soon.</p>
+        </div>
+        {% endif %}
+
+        <p class="text-center text-sm text-gray-500 dark:text-gray-400 mt-12">
+            Questions? Email <a href="mailto:info@hargeisadebates.com" class="text-teal-600 dark:text-teal-400 hover:underline">info@hargeisadebates.com</a>
+            or call +252 63 3394822.
+        </p>
+    </div>
+</section>
+{% endblock %}

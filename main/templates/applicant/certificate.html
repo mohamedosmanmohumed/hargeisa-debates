@@ -1,0 +1,13 @@
+{% extends 'applicant/layout.html' %}
+{% block title %}My Certificate{% endblock %}
+{% block content %}
+<h1 class="font-space text-3xl font-bold mb-1">My Certificate</h1>
+<p class="text-slate-600 mb-6">Your certificate of participation for <strong>{{ form.title }}</strong> is ready.</p>
+<section class="bg-white rounded-2xl p-6 shadow-sm border">
+    <div class="text-sm text-slate-500">Issued to</div>
+    <div class="text-xl font-bold">{{ sub.applicant_name }}</div>
+    <div class="text-sm text-slate-500 mt-3">Issue date</div>
+    <div class="font-semibold">{{ cert.issue_date|date:"l, F j, Y" }}</div>
+    <a href="{% url 'applicant_certificate' %}?view=full" target="_blank" class="inline-block mt-5 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium">View / Print certificate</a>
+</section>
+{% endblock %}

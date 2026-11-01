@@ -1,0 +1,14 @@
+{% extends 'applicant/layout.html' %}
+{% block title %}My Application{% endblock %}
+{% block content %}
+<h1 class="font-space text-3xl font-bold mb-1">My Application</h1>
+<p class="text-slate-600 mb-6">Submitted {{ sub.submitted_at|date:"F j, Y" }} &middot; Status: <strong class="text-green-600">{{ sub.get_status_display }}</strong></p>
+<div class="bg-white rounded-2xl border shadow-sm p-5 space-y-4">
+    {% for a in answers %}
+    <div class="pb-3 border-b last:border-0">
+        <div class="text-sm text-slate-500">{{ a.field.label }}</div>
+        <div class="font-medium whitespace-pre-line">{% if a.field.field_type == 'file' %}{% if a.answer %}File uploaded{% else %}-{% endif %}{% else %}{{ a.answer|default:"-" }}{% endif %}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

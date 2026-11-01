@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Certificates - {{ form.title }} - Hargeisa Debates{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+        <a href="{% url 'admitted_list' form.id %}" class="text-teal-600 dark:text-teal-400 mb-4 inline-block">&larr; Back to Admitted</a>
+        <h1 class="text-3xl font-bold font-space text-gray-900 dark:text-white mb-2">{{ form.title }} - Certificates</h1>
+        <p class="text-gray-600 dark:text-gray-300 mb-6">Every admitted applicant gets a certificate with their own name in their account. It becomes visible only when published and an issue date is set.</p>
+
+        {% if messages %}{% for m in messages %}<div class="mb-4 px-4 py-3 rounded-lg bg-green-100 text-green-800">{{ m }}</div>{% endfor %}{% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="glass p-6 rounded-2xl shadow-lg border-2 border-teal-500/20 space-y-4 mb-10">
+            {% csrf_token %}
+            {% for f in cf %}
+            <div>
+                {% if f.field.widget.input_type == 'checkbox' %}
+                <label class="flex items-center gap-2 font-medium text-gray-900 dark:text-white">{{ f }} {{ f.label }}</label>
+                {% else %}
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ f.label }}</label>
+                <div class="[&>input]:w-full [&>textarea]:w-full [&>input]:px-3 [&>textarea]:px-3 [&>input]:py-2 [&>textarea]:py-2 [&>input]:rounded-lg [&>textarea]:rounded-lg [&>input]:border [&>textarea]:border [&>input]:border-gray-300 [&>textarea]:border-gray-300 [&>input]:text-gray-900 [&>textarea]:text-gray-900">{{ f }}</div>
+                {% endif %}
+                {% if f.help_text %}<p class="text-xs text-gray-500 mt-1">{{ f.help_text }}</p>{% endif %}
+                {% for e in f.errors %}<p class="text-xs text-red-600">{{ e }}</p>{% endfor %}
+            </div>
+            {% endfor %}
+            <div>
+                <label class="flex items-center gap-2 font-medium text-gray-900 dark:text-white"><input type="checkbox" name="notify" value="1"> Email all admitted applicants that certificates are ready</label>
+                <p class="text-xs text-gray-500 mt-1">Sent automatically when you switch Published on. Tick this to (re)send while it is already published.</p>
+            </div>
+            <button type="submit" class="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium">Save settings</button>
+        </form>
+
+        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Preview by applicant</h2>
+        {% if admitted %}
+        <div class="glass p-4 rounded-xl border border-teal-500/20 mb-3 flex flex-wrap items-center gap-3">
+            <label class="flex items-center gap-2 font-medium text-gray-900 dark:text-white"><input type="checkbox" id="cert-all" class="w-4 h-4"> Select all</label>
+            <span id="cert-count" class="text-sm text-gray-600 dark:text-gray-300">0 selected</span>
+            <select id="zip-fmt" class="ml-auto px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"><option value="pdf">PDF</option><option value="png">PNG</option><option value="both">PDF + PNG</option></select>
+            <button id="zip-btn" type="button" disabled class="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-lg text-sm font-medium">Export ZIP</button>
+            <span id="zip-status" class="text-sm text-gray-700 dark:text-gray-300 w-full"></span>
+        </div>
+        {% endif %}
+        <div class="space-y-2">
+            {% for s in admitted %}
+            <div class="glass p-4 rounded-xl border border-teal-500/20 flex justify-between items-center">
+                <label class="flex items-center gap-3 text-gray-900 dark:text-white"><input type="checkbox" class="cert-sel w-4 h-4" value="{{ s.id }}" data-name="{{ s.applicant_name }}"> {{ s.applicant_name }}</label>
+                <a href="{% url 'certificate_preview' s.id %}" target="_blank" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium">Preview</a>
+            </div>
+            {% empty %}<p class="text-gray-500">No admitted applicants yet.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+(function () {
+    var all = document.getElementById('cert-all'); if (!all) return;
+    var boxes = [].slice.call(document.querySelectorAll('.cert-sel')), btn = document.getElementById('zip-btn'),
+        st = document.getElementById('zip-status'), cnt = document.getElementById('cert-count');
+    var base = "{% url 'certificate_preview' 0 %}".replace(/0\/$/, '');
+    function sync() {
+        var n = boxes.filter(function (b) { return b.checked; }).length;
+        cnt.textContent = n + ' selected'; btn.disabled = !n;
+        all.checked = n === boxes.length; all.indeterminate = n > 0 && n < boxes.length;
+    }
+    all.addEventListener('change', function () { boxes.forEach(function (b) { b.checked = all.checked; }); sync(); });
+    boxes.forEach(function (b) { b.addEventListener('change', sync); });
+    function load(id) {
+        return new Promise(function (resolve, reject) {
+            var fr = document.createElement('iframe');
+            fr.style.cssText = 'position:fixed;left:-10000px;top:0;width:1200px;height:900px;border:0';
+            fr.onload = function () {
+                var t = setInterval(function () {
+                    if (fr.contentWindow.renderCertificateBlobs && fr.contentWindow.html2canvas && fr.contentWindow.jspdf) { clearInterval(t); resolve(fr); }
+                }, 100);
+                setTimeout(function () { clearInterval(t); reject(new Error('Timed out loading certificate')); }, 30000);
+            };
+            fr.src = base + id + '/';
+            document.body.appendChild(fr);
+        });
+    }
+    btn.addEventListener('click', async function () {
+        var sel = boxes.filter(function (b) { return b.checked; }), fmt = document.getElementById('zip-fmt').value,
+            zip = new JSZip(), used = {};
+        btn.disabled = true; all.disabled = true;
+        try {
+            for (var i = 0; i < sel.length; i++) {
+                st.textContent = 'Generating ' + (i + 1) + ' of ' + sel.length + ': ' + sel[i].dataset.name;
+                var fr = await load(sel[i].value);
+                try {
+                    var blobs = await fr.contentWindow.renderCertificateBlobs(fmt);
+                    var nm = (sel[i].dataset.name || 'applicant').replace(/[\\/:*?"<>|]+/g, '').trim() || 'applicant';
+                    used[nm] = (used[nm] || 0) + 1; if (used[nm] > 1) nm += '-' + sel[i].value;
+                    for (var f in blobs) zip.file(nm + ' - certificate.' + f, blobs[f]);
+                } finally { fr.remove(); }
+            }
+            st.textContent = 'Building ZIP...';
+            var out = await zip.generateAsync({ type: 'blob' }), a = document.createElement('a');
+            a.href = URL.createObjectURL(out); a.download = 'certificates.zip';
+            document.body.appendChild(a); a.click(); a.remove();
+            st.textContent = 'Downloaded ' + sel.length + ' certificate(s).';
+        } catch (e) {
+            st.textContent = 'Export failed: ' + e.message;
+        }
+        all.disabled = false; sync();
+    });
+})();
+</script>
+{% endblock %}
